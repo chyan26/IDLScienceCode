@@ -1,0 +1,11 @@
+t=findgen(100)
+n=28.0
+d=6.0
+lamda=8.5d-4
+tsys=600
+del_v=0.4d6
+omega=2.439*lamda/d
+ae=lamda^2/omega
+m=0.5
+del_s=1.02*((m*tsys)/(ae*sqrt(t*del_v*n)))
+end

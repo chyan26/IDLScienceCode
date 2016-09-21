@@ -1,0 +1,93 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%Creator: IDL 8.1
+%%CreationDate: Sun Mar  3 01:12:40 2013
+%%Title: IDL Clipboard
+%%BoundingBox: 0 0 1000 850
+%%DocumentFonts: (atend)
+%%EndComments
+/IDLDict dup 20 dict def load
+begin
+/bd {bind def} bind def
+/ld {load def} bd
+/CP/closepath ld
+/F/fill ld
+/L/lineto ld
+/M/moveto ld
+/N/newpath ld
+/R/setrgbcolor ld
+/S/stroke ld
+/T/show ld
+/GS/gsave ld
+/GR/grestore ld
+/STDFONT { findfont exch scalefont setfont } bind def
+/ISOFONT { findfont dup length dict begin
+{ 1 index /FID ne {def} {pop pop} ifelse } forall
+/Encoding ISOLatin1Encoding def currentdict end
+/idltmpfont exch definefont exch scalefont setfont } bind def
+/bwproc {
+    rgbproc
+    dup length 3 idiv string 0 3 0
+    5 -1 roll {
+    add 2 1 roll 1 sub dup 0 eq
+    { pop 3 idiv 3 -1 roll dup 4 -1 roll dup
+      3 1 roll 5 -1 roll put 1 add 3 0 }
+    { 2 1 roll } ifelse
+    } forall
+    pop pop pop
+} def
+systemdict /colorimage known not {
+    /colorimage {
+    pop
+    pop
+    /rgbproc exch def
+    { bwproc } image
+    } def
+} if
+
+% Freely available Gouraud Triangle proc by Frederic Delhoume
+/threshold 0.1 def
+/triangle { aload pop setrgbcolor aload pop 5 3 roll 4 2 roll 3 2
+roll exch moveto lineto lineto closepath fill } bd /computediff1
+{ 2 copy sub abs threshold ge {pop pop pop true} { exch 2 index
+sub abs threshold ge { pop pop true} { sub abs threshold ge }
+ifelse } ifelse } bd /computediff3 { 3 copy 0 get 3 1 roll 0 get
+3 1 roll 0 get computediff1 {true} { 3 copy 1 get 3 1 roll 1 get
+3 1 roll 1 get computediff1 {true} { 3 copy 2 get 3 1 roll 2 get
+3 1 roll 2 get computediff1 } ifelse } ifelse } bd /middlecolor
+{ aload pop 4 -1 roll aload pop 4 -1 roll add 2 div 5 1 roll 3 -1
+roll add 2 div 3 1 roll add 2 div 3 1 roll exch 3 array astore }
+bd /gouraudtriangle { computediff3 { 4 -1 roll aload 7 1 roll 6
+-1 roll pop 3 -1 roll pop add 2 div 3 1 roll add 2 div exch 3 -1
+roll aload 7 1 roll exch pop 4 -1 roll pop add 2 div 3 1 roll add
+2 div exch 3 -1 roll aload 7 1 roll pop 3 -1 roll pop add 2 div 3
+1 roll add 2 div exch 7 3 roll 10 -3 roll dup 3 index middlecolor
+4 1 roll 2 copy middlecolor 4 1 roll 3 copy pop middlecolor 4 1
+roll 13 -1 roll aload pop 17 index 6 index 15 index 19 index 6
+index 17 index 6 array astore 10 index 10 index 14 index
+gouraudtriangle 17 index 5 index 17 index 19 index 5 index 19
+index 6 array astore 10 index 9 index 13 index gouraudtriangle 13
+index 16 index 5 index 15 index 18 index 5 index 6 array astore 12
+index 12 index 9 index gouraudtriangle 17 index 16 index 15 index
+19 index 18 index 17 index 6 array astore 10 index 12 index 14
+index gouraudtriangle 18 {pop} repeat } { aload pop 5 3 roll aload
+pop 7 3 roll aload pop 9 3 roll 8 index 6 index 4 index add add
+3 div 10 1 roll 7 index 5 index 3 index add add 3 div 10 1 roll
+6 index 4 index 2 index add add 3 div 10 1 roll 9 {pop} repeat 3
+array astore triangle } ifelse } bd
+/GT/gouraudtriangle ld
+%%EndProlog
+
+gsave
+0.16 0.16 scale
+N
+GS N 0 0 M 6250 0 L 6250 5313 L 0 5313 L CP clip N
+1 1 1 R
+0 0 M 6250 0 L 6250 5313 L 0 5313 L CP F
+GR
+GS N 0 0 M 6250 0 L 6250 5313 L 0 5313 L CP clip N
+GR
+end
+grestore
+showpage
+%%Trailer
+%%EOF

@@ -1,0 +1,203 @@
+PRO LOADCONFIG
+   COMMON share,setting
+   
+   ;cubepath='/arrays/cfht_3/chyan/guidecube/'
+   ;cubepath='/h/archive/current/instrument/wircam/'
+   ;calibpath='/data/ula/wircam/calib/'
+   ;datapath='/data/wena/wircam/chyan/gcube/'
+
+   path='/data/chyan/Projects/S104/'
+   setting={path:path}
+END
+
+;
+; Get 2MASS catalog from network using FITS header.
+;
+PRO GET2MASS, hdr, ref
+   spawn,"rm -rf /tmp/2mass_idl.dat"
+   spawn,"scat -c tmc 304.4438033 36.74728675 J2000 -r 250 -n 500 -d> /tmp/2mass_idl.dat"
+   readcol,'/tmp/2mass_idl.dat',a,ra,dec,m1,m2,mag
+   ;ind=where(mag ne 0)
+   
+   
+   adxy,hdr,ra,dec,x,y
+
+   ind=where(((x-282.0)^2)+((y-270)^2) le 10000,count)
+   ref={id:findgen(n_elements(ra)),ra:ra[ind],dec:dec[ind],x:x[ind],$
+      y:y[ind],mj:m1[ind],mh:m2[ind],mk:mag[ind]}
+END
+
+PRO MKCCDIAGRAM, final, ps=ps
+   COMMON share,setting
+   loadconfig
+
+;  !p.multi=[0,1,2]
+   if keyword_set(PS) then begin 
+      set_plot,'ps'
+      device,filename=setting.path+'hrdiagram.eps',$
+         /color,xsize=20,ysize=20,xoffset=0.4,yoffset=10,$
+         SET_FONT='Helvetica',/TT_FONT,/encapsulated
+         
+      
+      tvlct,[0,255,0,0],[0,0,255,0],[0,0,0,255]
+      red=1
+      green=2
+      blue=3
+   endif else begin
+      blue=65535
+      red=255
+      green=32768    
+   endelse
+
+
+ 
+   plot,final.mh-final.mk,final.mj-final.mh,$
+      xtitle='H - Ks',ytitle='J - H',xrange=[-0.5,2.5],yrange=[0,4],$
+      xstyle=1,psym=7,charsize=1.6,symsize=0.3, font=1, xthick=5.0,$
+      ythick=5.0
+ 
+
+   loaddwarfiso,djh,dhk     
+   loadgaintiso,gjh,ghk
+   oplot,dhk,djh,color=blue
+   oplot,ghk,gjh,color=blue
+   
+   aa=(findgen(6)+5)/10
+   bb=0.58*aa+0.52
+   oplot,aa,bb,line=4,color=blue
+   ;plot extinction
+   
+   arrow,0.0,1.5,0.65,2.61,/data,color=red
+   xyouts,0,2.61,'Av = 10',font=1,charsize=1.5
+   oplot,[0.37,3.37],[0.66,5.76],line=3,color=red
+   oplot,[0.16,3.16],[0.79,5.89],line=3,color=red
+   oplot,[max(aa),3+max(aa)],[max(bb),5.1+max(bb)],line=3,color=red
+   
+   
+   if keyword_set(PS) then begin
+     device,/close
+     set_plot,'x'
+   endif
+   
+   resetplt,/all
+   !p.multi=0
+
+   return 
+END
+
+FUNCTION ABSMAG, final, dist
+   amag=final
+   amag.mj=final.mj-5*(alog10(dist)-1)
+   amag.mh=final.mh-5*(alog10(dist)-1)
+   amag.mk=final.mk-5*(alog10(dist)-1)
+   return,amag
+END
+
+PRO MKCMD, final, ps=ps
+
+   COMMON share,setting
+   loadconfig
+
+   !p.multi=[0,2,1]
+   if keyword_set(PS) then begin 
+      set_plot,'ps'
+      device,filename=setting.path+'cmd_10myr.ps',$
+         /color,xsize=35,ysize=15,xoffset=0.4,yoffset=10,$
+         SET_FONT='Helvetica',/TT_FONT,/encapsulated
+         
+      
+      tvlct,[0,255,0,0],[0,0,255,0],[0,0,0,255]
+      red=1
+      green=2
+      blue=3
+   endif else begin
+     blue=65535
+      red=255
+      green=32768    
+   endelse
+
+   ;----------------------------------
+   ;  J-H vs J
+   ;----------------------------------
+   ; Plot CMD
+   plot,final.mj-final.mh,final.mj,psym=7, $
+      yrange=[5,-6],ystyle=1,xrange=[-1,5], $
+      xstyle=1, xtitle='J - H',ytitle='M!IJ!N',charsize=2,font=1,$
+      symsize=0.3,xthick=5.0,ythick=5.0
+   
+   loadiso_dm98,iso,av=0,age=10
+   loadiso_dm98,iso1,av=10.0,age=10
+   readcol,setting.path+'iso_50myr.dat',a,mass,m,l,t,g,mb,j,h,k
+   oplot,iso.mj-iso.mh,iso.mj,color=red
+   oplot,iso1.mj-iso1.mh,iso1.mj,color=red   
+   oplot,j-h,j
+      
+   ;----------------------------------
+   ;  H-Ks vs Ks
+   ;----------------------------------
+   
+   
+   plot,final.mh-final.mk,final.mk,psym=7, $
+      yrange=[13,-5],ystyle=1,xrange=[-1,5], $
+      xstyle=1, xtitle='H - Ks',ytitle='M!IKs!N',charsize=2,font=1,$
+      symsize=0.3,xthick=5.0,ythick=5.0
+   
+;    ; Points of SW cluster
+;    ind=where(final.x ge 564 and final.x le 745 and final.y ge 286 $
+;       and final.y le 449)     
+;    oplot,final.mh[ind]-final.mk[ind],final.mk[ind],psym=4   
+;    
+;    ; Make the region for SW member
+;    getds9region,final.x[ind],final.y[ind],'sw.reg',color='green'
+;    
+;    
+;    ; Data of NE cluster
+;    ind=where(((final.x-476.0)^2 + (final.y-515.0)^2) le 28000)
+;    oplot,final.mh[ind]-final.mk[ind],final.mk[ind],psym=6   
+;    ; Make the region for NE member
+;    getds9region,final.x[ind],final.y[ind],'ne.reg',color='red'
+;    
+;    
+;    ; Select stars in the left hand side of the ISO
+;    ii=where(final.mh-final.mk le 0.3 and final.mh-final.mk ge -1  and final.mk ge 5)
+;    ;oplot,final.mh[ii]-final.mk[ii],final.mk[ii],psym=6,color=red
+;    ; Make region files for non-member
+;    getds9region,final.x[ii],final.y[ii],'hk',color='red'
+;    
+;    ; Print the information of non-member stars
+;    for k=0,n_elements(ii)-1 do begin
+;       print,final.mj[ii[k]],final.mh[ii[k]],final.mk[ii[k]],final.mh[ii[k]]-final.mk[ii[k]]
+;    endfor
+   
+   oplot,iso.mh-iso.mk,iso.mk,color=red
+   oplot,iso1.mh-iso1.mk,iso1.mk,color=red
+      
+   if keyword_set(PS) then begin
+     device,/close
+     set_plot,'x'
+   endif
+   
+   resetplt,/all
+   !p.multi=0
+
+   return 
+END
+
+
+PRO LOADPOSS, im, hd
+   COMMON share,setting
+   loadconfig
+
+   im=readfits(setting.path+'poss.fits',hd)
+   th_image_cont,im,crange=[0,50],/nocont,/nobar
+END
+
+PRO S104
+   loadposs,im,hd
+   get2mass,hd,ref
+;th_image_cont,im,crange=[0,300],/nocont,/nobar
+;oplot,ref.x,ref.y,psym=4,color=255
+   mkccdiagram,ref
+   absmag=absmag(ref,3500.0)
+   mkcmd,absmag
+END

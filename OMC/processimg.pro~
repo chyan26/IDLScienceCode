@@ -1,0 +1,51 @@
+; This program is used to processing the Sirius image from Satako
+@buildmask
+@flatfield
+
+PRO LOADCONFIG
+  COMMON share,config
+   
+   ; Path for Capella
+   path='/data/chyan/Projects/OMCIR/'
+   
+   ; Path for MacBook Pro  
+   ;path='/Volumes/disk1s1/Projects/OMCIR/'
+   
+   rawpath=path+'raw/'
+   detpath=path+'detrend/'
+   redpath=path+'processed/'
+   calibpath=path+'calib/'
+   config=path+'config/'
+   
+   config={path:path,rawpath:rawpath,detpath:detpath,redpath:redpath,calibpath:calibpath,config:config}
+END
+
+
+PRO MASKSOURCE
+   COMMON share,config
+   loadconfig
+   
+   
+   file='j041107_0776s.fits'
+   pos = stregex(file, '[jhk][0-9]+_[0-9]+', length=len)
+   bkfile=config.detpath+STRMID(file, pos, len)+'s_bk.fits'
+   
+   spawn,'sex -c '+config.config+'background.sex '+config.detpath+file+$
+         ' -CHECKIMAGE_NAME '+bkfile+$
+         ' -PARAMETERS_NAME '+config.config+'default.param'
+      ;' -CATALOG_NAME '+setting.fitspath+'j.sex -MAG_ZEROPOINT 25.00'$
+      ;+' -PHOT_FLUXFRAC 0.5 -PHOT_APERTURES 7 -ANALYSIS_THRESH 4.0 '$
+      ;+' -DETECT_THRESH 4.0 -BACKPHOTO_TYPE LOCAL -BACK_SIZE 5 '
+
+END
+
+
+
+
+PRO PROCESSIMG
+  
+  buildmask
+  flatfield
+  
+
+END

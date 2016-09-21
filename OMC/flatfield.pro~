@@ -1,0 +1,48 @@
+PRO  FLATFIELD
+   COMMON share,config
+   loadconfig
+   
+   spawn,'ls '+config.rawpath+'j[0-9]*.fits',jlist
+   spawn,'ls '+config.rawpath+'h[0-9]*.fits',hlist
+   spawn,'ls '+config.rawpath+'k[0-9]*.fits',klist
+   
+   jflat=config.calibpath+'jtwf041101t14.fits'
+   hflat=config.calibpath+'htwf041101t14.fits'
+   kflat=config.calibpath+'ktwf041101t14.fits'
+   
+   mask=readfits(config.calibpath+'badpixel.fits')
+   jtwf=readfits(jflat)
+   htwf=readfits(hflat)
+   ktwf=readfits(kflat)
+   
+   for i=0,n_elements(jlist)-1 do begin
+      file=jlist[i]
+      pos = stregex(file, 'j[0-9]+_[0-9]+', length=len)
+      defile=config.detpath+STRMID(file, pos, len)+'s.fits'
+      im=readfits(file,hd)
+      dim=(im/jtwf)*mask
+      repnan,dim
+      writefits,defile,dim,hd
+   endfor
+   
+   for i=0,n_elements(hlist)-1 do begin
+      file=hlist[i]
+      pos = stregex(file, 'h[0-9]+_[0-9]+', length=len)
+      defile=config.detpath+STRMID(file, pos, len)+'s.fits'
+      im=readfits(file,hd)
+      dim=(im/htwf)*mask
+      repnan,dim
+      writefits,defile,dim,hd
+   endfor
+   
+   for i=0,n_elements(klist)-1 do begin
+      file=klist[i]
+      pos = stregex(file, 'k[0-9]+_[0-9]+', length=len)
+      defile=config.detpath+STRMID(file, pos, len)+'s.fits'
+      im=readfits(file,hd)
+      dim=(im/ktwf)*mask
+      repnan,dim
+      writefits,defile,dim,hd
+   endfor
+   
+END

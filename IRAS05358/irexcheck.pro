@@ -1,0 +1,65 @@
+; This program checks a given region on HR diagram and plot the region file for DS9
+
+PRO LOADCONFIG
+	COMMON share,imgpath, mappath
+	
+	;Settings for HOME computer
+	;imgpath = '/Volumes/disk1s1/S233IR/'
+	;mappath = '/Volumes/disk1s1/S233IR/'
+	
+	;Settings for ASIAA computer
+	imgpath='/arrays/cfht/cfht_2/chyan/home/Science/S233IR/'
+	mappath='/arrays/cfht/cfht_2/chyan/home/Science/S233IR/'
+END
+
+PRO IREXCHECK, cat
+	COMMON share,imgpath, mappath	
+	;loadconfig
+	  blue=65535
+      red=255
+      green=32768    
+
+	hk=cat.mh-cat.mk
+	jh=cat.mj-cat.mh
+	gjh=hk*1.7+0.518
+	
+	del=jh-gjh
+	
+	x=cat.x
+	y=cat.y
+	
+	regname = 'regcheck.reg'
+	regpath = mappath
+	regfile = regpath+regname
+	
+	plot,cat.mh-cat.mk,cat.mj-cat.mh,$
+		xtitle='H - Ks',ytitle='J - H',xrange=[-0.5,4.5],yrange=[0,5],/nodata
+	
+	loadgaintiso,gjh,ghk
+	loaddwarfiso,djh,dhk
+	oplot,dhk,djh,color=65535
+	oplot,ghk,gjh,color=65535
+ 	aa=(findgen(6)+5)/10
+	bb=0.58*aa+0.52
+	oplot,aa,bb,line=4,color=blue
+	oplot,[0.37,3.37],[0.66,5.76],line=3,color=red
+ 	oplot,[0.16,3.16],[0.79,5.89],line=3,color=red
+	oplot,[max(aa),3+max(aa)],[max(bb),5.1+max(bb)],line=3,color=red
+	
+	openw,fileunit, regfile, /get_lun	
+
+	for i=0,n_elements(cat.x)-1 do begin
+		ext=0	
+		if del[i] ge 0.2 and cat.mh[i]-cat.mk[i] ge -1 then begin
+			regstring = 'tile '+strcompress(string(ext),/remove_all)+'; image; circle('+$
+					strcompress(string(x[i]),/remove_all)+','+$
+					strcompress(string(y[i]),/remove_all)+',7) #color = blue'
+			printf, fileunit, format='(A)', regstring
+			print,cat.mj[i],cat.mh[i],cat.mk[i],x[i],y[i]
+			plots,cat.mh[i]-cat.mk[i],cat.mj[i]-cat.mh[i],psym=4
+		endif
+	endfor
+	close, fileunit
+	free_lun,fileunit
+
+END

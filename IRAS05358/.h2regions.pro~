@@ -1,0 +1,18 @@
+PRO SUBTRACT_CONT, im
+   common share, imgpath, mappath
+   loadconfig
+   generate_mask,mask,h2
+   
+   ; Masking bright stars
+   nim1=h2*mask
+   nim2=ks*mask
+   
+   ; Replace masked pixel with linear interpolation
+   fixbadpix,nim1,mask,xim1
+   fixbadpix,nim2,mask,xim2
+   
+   ; Image subtraction to get H2 image
+   im=(xim1-xim2/10)*mask
+   dust=ks-h2
+
+END

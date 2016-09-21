@@ -1,0 +1,180 @@
+PRO LOADCONFIG
+   COMMON share,config
+   
+   ;cubepath='/arrays/cfht_3/chyan/guidecube/'
+   ;cubepath='/h/archive/current/instrument/wircam/'
+   ;calibpath='/data/ula/wircam/calib/'
+   ;datapath='/data/wena/wircam/chyan/gcube/'
+   path='/data/chyan/OMC/'
+   fitspath=path
+   pspath=path
+   
+   config={path:path,fitspath:fitspath,pspath:pspath}
+END
+
+PRO ROTATEIMAGE
+	COMMON share,config
+	
+	loadconfig
+	
+	
+	im1=config.path+'SP3.6micron.fits'
+	im2=config.path+'SP4.5micron.fits'
+	im3=config.path+'SP5.8micron.fits'
+	im4=config.path+'SP8micron.fits'  
+	im5=config.path+'SP24_rotate.fits'
+	im6=config.path+'SP70micron.fits' 
+	im7=config.path+'SP160micron.fits'
+	im8=config.path+'jomcmos5.fits'
+	im9=config.path+'homcmos1.fits'
+	im10=config.path+'komcmos1.fits'
+	
+	; Rotate the image
+	
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'i1.fits '+im1
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'i2.fits '+im2
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'i3.fits '+im3
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'i4.fits '+im4
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'m2.fits '+im5
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'m3.fits '+im6
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'m4.fits '+im7
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'j.fits '+im8
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'h.fits '+im9
+	spawn,'remap -j 5:35:23.48 -5:01:32.2 -o '+config.path+'k.fits '+im10
+	
+
+END
+
+PRO RESIZEIMAGE
+	COMMON share,config
+	
+	loadconfig
+	
+	
+	im1=readfits(config.path+'i1.fits',hd1)
+	im2=readfits(config.path+'i2.fits',hd2)
+	im3=readfits(config.path+'i3.fits',hd3)
+	im4=readfits(config.path+'i4.fits',hd4)
+	im5=readfits(config.path+'m2.fits',hd5)
+	im6=readfits(config.path+'m3.fits',hd6)
+	im7=readfits(config.path+'m4.fits',hd7)
+	
+	im8=readfits(config.path+'j.fits',hd8)
+	im9=readfits(config.path+'h.fits',hd9)
+	im10=readfits(config.path+'k.fits',hd10)
+	;
+	; scale image to the same dimension
+	hastrom, im5,hd5,tim5,thd5,hd1
+	hastrom, im6,hd6,tim6,thd6,hd1
+	hastrom, im7,hd7,tim7,thd7,hd1
+	
+	;
+	; cut interesting area
+	
+	hextract, im1, hd1, nim1,nhd1,1139,1203,1287,1351
+	hextract, im2, hd2, nim2,nhd2,1139,1203,1287,1351
+	hextract, im3, hd3, nim3,nhd3,1139,1203,1287,1351
+	hextract, im4, hd4, nim4,nhd4,1139,1203,1287,1351
+	hextract, tim5, thd5, nim5,nhd5,1139,1203,1287,1351
+	hextract, tim6, thd6, nim6,nhd6,1139,1203,1287,1351
+	hextract, tim7, thd7, nim7,nhd7,1139,1203,1287,1351
+	
+	hextract, im8, hd8, nim8,nhd8,479,647,1315,1483
+	hextract, im9, hd9, nim9,nhd9,479,647,1315,1483
+	hextract, im10, hd10, nim10,nhd10,479,647,1315,1483
+
+	updatehd,nhd8
+	updatehd,nhd9
+	updatehd,nhd10
+	 	
+	repnan, nim1, 0
+	repnan, nim2, 0
+	repnan, nim3, 0
+	repnan, nim4, 0
+	repnan, nim5, 0
+	repnan, nim6, 0
+	
+	writefits,config.path+'ni1.fits',nim1,nhd1
+	writefits,config.path+'ni2.fits',nim2,nhd2
+	writefits,config.path+'ni3.fits',nim3,nhd3
+	writefits,config.path+'ni4.fits',nim4,nhd4
+	writefits,config.path+'ni5.fits',nim5,nhd5
+	writefits,config.path+'ni6.fits',nim6,nhd6
+	writefits,config.path+'ni7.fits',nim7,nhd7
+	
+	writefits,config.path+'nj.fits',nim8,nhd8
+	writefits,config.path+'nh.fits',nim9,nhd9
+	writefits,config.path+'nk.fits',nim10,nhd10
+
+END
+
+PRO UPDATEHD,HD
+	sxaddpar, nhd10, 'CD1_2',0
+ 	sxaddpar, nhd10, 'CD2_1',0
+
+END
+
+PRO RUNSEXTRACTOR
+	COMMON share,config
+	loadconfig
+
+	file=['ni1','ni2','ni3','ni4','ni5','ni6','nj','nh','nk']
+
+
+	for i=0,n_elements(file)-1 do begin
+	spawn,'sex -c '+config.path+'default.sex '+config.path+file[i]+'.fits  '$
+		+' -PARAMETERS_NAME '+config.path+'default.param '$
+		+' -FILTER_NAME '+config.path+'default.conv '$
+		+' -STARNNW_NAME '+config.path+'default.nnw '$
+		+' -PARAMETERS_NAME '+config.path+'default.param '$
+		+' -CATALOG_NAME '+config.path+file[i]+'.sex -MAG_ZEROPOINT 25.0'$
+		+' -PHOT_FLUXFRAC 0.5 -PHOT_AUTOPARAMS 0.5,2.5 '$
+		+' -PHOT_AUTOAPERS 1.0,2.0'$
+		+' -CHECKIMAGE_TYPE  APERTURES -CHECKIMAGE_NAME '$
+		+config.path+file[i]+'-check.fits'
+	endfor
+	
+END
+PRO GETBACKGROUND
+	COMMON share,config
+	loadconfig
+
+	file=['ni1','ni2','ni3','ni4','ni5','ni6','nj','nh','nk']
+
+	for i=0,n_elements(file)-1 do begin
+	spawn,'sex -c '+config.path+'default.sex '+config.path+file[i]+'.fits  '$
+		+' -PARAMETERS_NAME '+config.path+'default.param '$
+		+' -FILTER_NAME '+config.path+'default.conv '$
+		+' -STARNNW_NAME '+config.path+'default.nnw '$
+		+' -PARAMETERS_NAME '+config.path+'default.param '$
+		+' -CATALOG_NAME '+config.path+file[i]+'.sex -MAG_ZEROPOINT 25.0'$
+		+' -PHOT_FLUXFRAC 0.5 -PHOT_AUTOPARAMS 0.5,2.5 '$
+		+' -PHOT_AUTOAPERS 1.0,2.0'$
+		+' -CHECKIMAGE_TYPE  BACKGROUND -CHECKIMAGE_NAME '$
+		+config.path+file[i]+'-background.fits '$
+		+' -VERBOSE_TYPE  QUIET '
+	endfor
+	
+END
+
+PRO GETFLUX
+	COMMON share,config
+	loadconfig
+
+	file=['ni1','ni2','ni3','ni4','ni5','ni6','nj','nh','nk']
+
+	f=fltarr(9)
+	e=fltarr(9)
+	
+	for i=0,5 do begin
+		readcol,config.path+file[i]+'.sex',id,iso_ferr, flux, flux_err, x,y,flag,/silent	
+		ind=where(x ge 30 and x le 35 and y ge 30 and y le 35, count)
+		f[i]=0.033846*flux[ind]
+		e[i]=0.033846*flux_err[ind]
+		;print,count
+	endfor
+	print,f,e
+END
+
+
+

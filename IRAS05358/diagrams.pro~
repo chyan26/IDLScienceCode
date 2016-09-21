@@ -1,0 +1,249 @@
+PRO MKCCDIAGRAM, final, ps=ps
+
+	COMMON share,imgpath, mappath
+	
+	loadconfig
+
+
+   if keyword_set(PS) then begin 
+      set_plot,'ps'
+      device,filename=mappath+'hrdiagram.eps',$
+         /color,xsize=20,ysize=20,xoffset=0.4,yoffset=10,$
+         SET_FONT='Helvetica',/TT_FONT,/encapsulated
+         
+      
+      tvlct,[0,255,0,0],[0,0,255,0],[0,0,0,255]
+      red=1
+      green=2
+      blue=3
+   endif else begin
+	   blue=65535
+      red=255
+      green=32768    
+   endelse
+
+
+	; Plot HR diagram
+	ind=where((((final.x-659.0)^2 + (final.y-369.0)^2) le 10000) $
+      or (((final.x-537.0)^2 + (final.y-530.0)^2) le 11000), complement=inx)		
+
+	plot,final.mh[inx]-final.mk[inx],final.mj[inx]-final.mh[inx],$
+		xtitle='H - Ks',ytitle='J - H',xrange=[-0.5,4.5],yrange=[0,5],$
+		xstyle=1,psym=7,charsize=1.6,symsize=0.3, font=1, xthick=5.0,$
+		ythick=5.0;,/nodata
+	
+   ; Points of SW cluster
+   ind=where(((final.x-659.0)^2 + (final.y-369.0)^2) le 10000,count)
+	if (count ne 0) then $ 
+	oplot,final.mh[ind]-final.mk[ind],final.mj[ind]-final.mh[ind],psym=4	
+      print,count
+	; Data of NE cluster
+   ind=where(((final.x-537.0)^2 + (final.y-530.0)^2) le 11000,count)
+	oplot,final.mh[ind]-final.mk[ind],final.mj[ind]-final.mh[ind],psym=6
+
+	
+	; Plot stellar group
+	readcol,imgpath+'zams_dwarf.txt',djh,dhk,/SILENT
+	oplot,dhk,djh,color=blue
+	readcol,imgpath+'zams_gaint.txt',gjh,ghk,/SILENT
+	oplot,ghk,gjh,color=blue
+	; Plot CTTS
+	aa=(findgen(6)+5)/10
+	bb=0.58*aa+0.52
+	oplot,aa,bb,line=4,color=blue
+	
+   ;plot extinction vector
+ 	arrow,0.0,1.5,0.65,2.61,/data,color=red
+   xyouts,0,2.61,'Av = 10',font=1,charsize=1.5
+ 	
+   ; Plot extcintoin direction
+   oplot,[0.37,3.37],[0.66,5.76],line=3,color=red
+ 	oplot,[0.16,3.16],[0.79,5.89],line=3,color=red
+	oplot,[max(aa),3+max(aa)],[max(bb),5.1+max(bb)],line=3,color=red
+	
+   loadavgiso,iso
+   oplot,iso.mh-iso.mk,iso.mj-iso.mh,color=red
+	if keyword_set(PS) then begin
+     device,/close
+     set_plot,'x'
+	endif
+	
+
+	return 
+END
+
+PRO CTTSISO
+	COMMON share,imgpath, mappath	
+	loadconfig
+    
+    blue=65535
+    red=255
+    green=32768    
+
+	plot,[-0.5,4.5],[0,5],$
+	xtitle='H - Ks',ytitle='J - H',xrange=[-0.5,1.5],yrange=[0,2],$
+	xstyle=1,psym=7,charsize=1.6,symsize=0.3, font=1, xthick=5.0,$
+	ythick=5.0,/nodata
+
+	loaddwarfiso,djh,dhk
+	loadgaintiso,gjh,ghk
+	oplot,dhk,djh,color=blue
+	oplot,ghk,gjh,color=blue
+	
+	aa=(findgen(6)+4.5)/10
+	bb=0.58*aa+0.52
+	oplot,aa,bb,line=4,color=blue
+
+ 	oplot,[0.37,3.37],[0.66,5.76],line=3,color=red
+ 	oplot,[0.16,3.16],[0.79,5.89],line=3,color=red
+	oplot,[max(aa),3+max(aa)],[max(bb),5.1+max(bb)],line=3,color=red
+
+	x=findgen(15)
+	y=1.7*x+0.031
+	oplot,x,y
+	y=1.7*x-0.544
+	oplot,x,y
+	
+	hk=(findgen(51)+45)/100
+	
+	jh=0.58*hk+0.52
+	
+	h=findgen(51)/10
+	print,h
+	k=h-hk
+	j=jh+h
+	oplot,h-k,j-h,psym=4
+END
+
+
+PRO MKCMD, final, ps=ps
+
+	COMMON share,imgpath, mappath	
+	loadconfig
+
+	!p.multi=0
+   if keyword_set(PS) then begin 
+      set_plot,'ps'
+      device,filename=mappath+'cmd.eps',$
+         /color,xsize=20,ysize=20,xoffset=0.4,yoffset=10,$
+         SET_FONT='Helvetica',/TT_FONT,/encapsulated
+         
+      
+      tvlct,[0,255,0,0],[0,0,255,0],[0,0,0,255]
+      red=1
+      green=2
+      blue=3
+   endif else begin
+	  blue=65535
+      red=255
+      green=32768    
+   endelse
+
+; 	;----------------------------------
+; 	;  J-H vs J
+; 	;----------------------------------
+; 	; Plot CMD
+; 	ind=where((final.x ge 564 and final.x le 745 and final.y ge 286 $
+; 	and final.y le 449) or ((final.x-476.0)^2 + (final.y-510.0)^2) $
+; 	le 28000, complement=inx)		
+; 
+; 	plot,final.mj[inx]-final.mh[inx],final.mj[inx],psym=7, $
+; 		yrange=[13,-5],ystyle=1,xrange=[-1,5], $
+; 		xstyle=1, xtitle='J - H',ytitle='M!IJ!N',charsize=2,font=1,$
+; 		symsize=0.3,xthick=5.0,ythick=5.0
+; 	; Points of SW cluster
+; 	ind=where(final.x ge 564 and final.x le 745 and final.y ge 286 $
+; 		and final.y le 449)		
+; 	oplot,final.mj[ind]-final.mh[ind],final.mj[ind],psym=4	
+; 	
+; 	; Data of NE cluster
+; 	ind=where(((final.x-476.0)^2 + (final.y-515.0)^2) le 28000)
+; 	oplot,final.mj[ind]-final.mh[ind],final.mj[ind],psym=6	
+; 
+; 	loadiso_dm98,iso,av=0,age=3
+; 	loadiso_dm98,iso1,av=10.0,age=3
+; 	
+; 	oplot,iso.mj-iso.mh,iso.mj,color=red
+; 	oplot,iso1.mj-iso1.mh,iso1.mj,color=red	
+; 	
+; 	; Select stars in the left hand side of the ISO
+; 	jj=where(final.mj-final.mh le 0.6 and final.mj ge 5)
+; 	;oplot,final.mj[jj]-final.mh[jj],final.mj[jj],psym=6,color=red
+; 	; Make region file for non-member
+; 	getds9region,final.x[jj],final.y[jj],'jh',color='green'
+		
+	;----------------------------------
+	;  H-Ks vs Ks
+	;----------------------------------
+  
+  ; first of all, load isochrone to get average H-K 
+   age=[1,2,3,5,7,10]
+   for i=0,5 do begin
+      loadiso_dm98,iso,av=0,age=age[i]
+      if i eq 0 then begin
+         mh=reform(iso.mh)
+         mk=reform(iso.mk)
+      endif else begin
+         mh=[mh,reform(iso.mh)]
+         mk=[mk,reform(iso.mk)]
+      endelse
+   endfor
+	
+   ix=sort(mk)
+   
+   amk=mk[ix]
+   amh=mh[ix]
+   
+   
+	ind=where((((final.x-656.0)^2 + (final.y-360.0)^2) le 10000) or $
+   (((final.x-490.0)^2 + (final.y-515.0)^2) le 11000), complement=inx)		
+	
+	plot,final.mh[inx]-final.mk[inx],final.mk[inx],psym=7, $
+		yrange=[13,-5],ystyle=1,xrange=[-1,5], $
+		xstyle=1, xtitle='H - Ks',ytitle='M!IKs!N',charsize=2,font=1,$
+		symsize=0.3,xthick=5.0,ythick=5.0
+	
+	; Points of SW cluster
+	ind=where(((final.x-659.0)^2 + (final.y-369.0)^2) le 10000,count)		
+	oplot,final.mh[ind]-final.mk[ind],final.mk[ind],psym=4	
+	
+	; Make the region for SW member
+	getds9region,final.x[ind],final.y[ind],'sw.reg',color='green'
+	
+	
+	; Data of NE cluster
+	ind=where(((final.x-537.0)^2 + (final.y-530.0)^2) le 11000,count)
+	oplot,final.mh[ind]-final.mk[ind],final.mk[ind],psym=6	
+	
+    ; Make the region for SW member
+    getds9region,final.x[ind],final.y[ind],'ne',color='green'
+   
+	; Select stars in the left hand side of the ISO
+	ii=where(final.mh-final.mk le 0.3 and final.mh-final.mk ge -1  and final.mk ge 5)
+	
+   ;oplot,final.mh[ii]-final.mk[ii],final.mk[ii],psym=6,color=red
+	; Make region files for non-member
+	getds9region,final.x[ii],final.y[ii],'hk',color='red'
+	
+	; Print the information of non-member stars
+	;for k=0,n_elements(ii)-1 do begin
+	;	print,final.mj[ii[k]],final.mh[ii[k]],final.mk[ii[k]],final.mh[ii[k]]-final.mk[ii[k]]
+	;endfor
+	
+   loadavgiso,iso
+   oplot,iso.mh-iso.mk,iso.mk,color=red,thick=5
+   ;print,max(amh-amk),min(amh-amk)
+   
+   arrow,2.0,-3.5,2.61,-2.38,/data,color=red
+   xyouts,2.0,-3.5,'Av = 10',font=1,charsize=1.5
+
+	if keyword_set(PS) then begin
+     device,/close
+     set_plot,'x'
+	endif
+	
+	resetplt,/all
+	!p.multi=0
+
+	return 
+END

@@ -1,0 +1,37 @@
+home='/asiaa/home/chyan/'
+darr='/arrays/cfht_2/chyan/TAOS/Results/'
+
+set_plot,'ps'
+device,filename=home+'051202_zipF068001_A0072.ps',xsize=20,$
+       ysize=20,yoffset=5,xoffset=0
+
+im=readfits(home+'051202_zipF068001_A0072.fit')
+
+med=fltarr(n_elements(im[*,0]))
+for i=0,n_elements(im[*,0])-1 do med[i]=median(im[i,*])
+
+!p.multi=[0,1,2]
+th_image_cont,im[*,0:500],crange=[500,900],/nocont,/nobar,/invert
+plot,med,psym=10,xstyle=1,yrange=[600,750]
+!p.multi=0
+device,/close
+
+set_plot,'x'
+
+;fmt='A150, F9.4, F9.4'
+;readfmt,darr+'/lightcurves.kr/068.051202.B.std',$
+;fmt,s,x,y
+
+readcol,darr+'/lightcurves.kr/068.051202.A.std',$
+format='(a20 i,f11.2,f9.2,f9.2,f9.2,f9.2,f,i,i,i,i,i,i,i,i,i,i,i,f,f)',$
+a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,x,y,delimiter=' '
+close,1
+openw,1,home+'068.051202.A.std.new'
+for z=0,n_elements(s)-1 do begin
+printf,1,format='(a,i,f11.2,f9.2,f6.2,f7.2,f5.2,i,i,i,i,i,i,i,i,i,i,i3,i3,f10.2,f10.2,f10.2)',$
+a[z],b[z],c[z],d[z],e[z],f[z],g[z],h[z],i[z],j[z],k[z],l[z],m[z],$
+n[z],o[z],p[z],q[z],r[z],s[z],x[z],y[z],med[fix(x[z])]
+endfor
+close,1
+
+end

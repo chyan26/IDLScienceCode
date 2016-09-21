@@ -1,0 +1,27 @@
+This file describe the program used for S233IR research
+
+1. s233ir.pro
+This is the main program for this project, including the magnitude corrections, catalog matchin...
+
+2. phot_s233.pro
+All photometry related subroutines.
+
+3. textable.pro
+dump catalog structure to latex format.
+
+4. diagrams.pro
+plot HR diagram and color magnitude diagrams.
+
+5. lineregion
+subtracting continuum from H2 and Brg images.  And plot the region map.
+
+6. irexcheck.pro
+This program checks a given region on HR diagram and plot the region file for DS9.
+
+7. objregion.pro
+ this program is used to plot the region file for DS9.  It takes the catalog structure in IDL and plot
+  different band in different color.  with the help of this program, it will be easier to check the 
+  star detection in different filters.
+  
+8. deredden
+Program used to dereddening based on certain isochrone.

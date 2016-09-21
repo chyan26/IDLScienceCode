@@ -1,0 +1,297 @@
+PRO LOADCONFIG
+   COMMON share, path, hst_path,wircam_path,spitzer_path, hdf_path, $
+		cat_path, xsize, ysize
+   ;Settings for HOME computer
+   ;imgpath = '/home/chyan/iras/'
+   ;mappath = '/home/chyan/iras/'
+   
+   ;Settings for ASIAA computer
+   ; The path for storing output PS files.
+	path='/data/chyan/GOODSN/'
+   
+	hst_path='/arrays/cfht/cfht_3/chyan/GOODSN/HST/'
+   hdf_path='/arrays/cfht/cfht_3/chyan/GOODSN/HDF/'
+   cat_path='/arrays/cfht/cfht_3/chyan/GOODSN/Catalog/'
+   wircam_path='/arrays/cfht/cfht_3/chyan/GOODSN/WIRCam/'
+   spitzer_path='/arrays/cfht/cfht_3/chyan/GOODSN/Spitzer/'
+   
+	; Unit in arcsecond
+	xsize=15.0
+	ysize=15.0
+	
+   return 
+END
+
+PRO LOADCAT, cat, index=index
+   COMMON share, path, hst_path,wircam_path,spitzer_path, hdf_path, $
+		cat_path, xsize, ysize
+   loadconfig
+   
+	file=cat_path+'wircam_k_wircam_j_tkrs_goods_irac_mips_hhdfn.fits'
+	tb=mrdfits(file,1)
+	
+	if keyword_set(index) then begin
+		id=reform(tb[index].wircam_k_id)
+		hst_ra=reform(tb[index].goods_ra)
+		hst_dec=reform(tb[index].goods_dec)
+		hst_sec=reform(tb[index].goods_sector)
+	
+		hdf_ra=reform(tb[index].hhdfn_ra)
+		hdf_dec=reform(tb[index].hhdfn_dec)
+	   
+ 		wir_ra=reform(tb[index].wircam_k_ra)
+		wir_dec=reform(tb[index].wircam_k_dec)
+	   
+  		irac_ra=reform(tb[index].irac_ra)
+		irac_dec=reform(tb[index].irac_dec)
+		irac_ch1=reform(tb[index].irac_ch1)
+		irac_ch2=reform(tb[index].irac_ch2)
+		irac_ch3=reform(tb[index].irac_ch3)
+		irac_ch4=reform(tb[index].irac_ch4)
+	
+	endif else begin
+		id=reform(tb[24857].wircam_k_id)
+		hst_ra=reform(tb[24857].goods_ra)
+		hst_dec=reform(tb[24857].goods_dec)
+		hst_sec=reform(tb[24857].goods_sector)
+	
+		hdf_ra=reform(tb[24857].hhdfn_ra)
+		hdf_dec=reform(tb[24857].hhdfn_dec)
+	   
+	 	wir_ra=reform(tb[24857].wircam_k_ra)
+		wir_dec=reform(tb[24857].wircam_k_dec)
+	   
+	  	irac_ra=reform(tb[24857].irac_ra)
+		irac_dec=reform(tb[24857].irac_dec)
+		irac_ch1=reform(tb[24857].irac_ch1)
+		irac_ch2=reform(tb[24857].irac_ch2)
+		irac_ch3=reform(tb[24857].irac_ch3)
+		irac_ch4=reform(tb[24857].irac_ch4)
+	endelse
+	cat={id:id,hst_ra:hst_ra,hst_dec:hst_dec,hst_sec:hst_sec,hdf_ra:hdf_ra,hdf_dec:hdf_dec,$
+			wir_ra:wir_ra,wir_dec:wir_dec,irac_ra:irac_ra,irac_dec:irac_dec,$
+			irac_ch1:irac_ch1,irac_ch2:irac_ch2,irac_ch3:irac_ch3,irac_ch4:irac_ch4}   
+   
+END
+
+PRO IRACSUBIMAGE, CAT, IMAGE
+   COMMON share, path, hst_path,wircam_path,spitzer_path, hdf_path, $
+		cat_path, xsize, ysize
+   loadconfig
+   
+	hdr=headfits(spitzer_path+'n_irac_1_s2_v0.30_sci.fits')
+   im=readfits(spitzer_path+'n_irac_1_s2_v0.30_sci.fits')
+   adxy,hdr,cat.irac_ra,cat.irac_dec,x,y
+   
+	fim1=fltarr(n_elements(x),10,10)
+	
+	for i=0,n_elements(x)-1 do begin
+      xx=floor(x[i])
+		yy=floor(y[i])
+		if cat.irac_ra[i] le 0 and  cat.irac_dec[i] le 0 then begin
+			fim1[i,*,*]=0.0
+		endif else begin
+			print,im[xx-4:xx+5,yy-4:yy+5]
+			fim1[i,*,*]=im[xx-4:xx+5,yy-4:yy+5]
+		endelse
+   endfor
+
+	image={i1:fim1}
+
+END
+
+PRO CATALOGIMAGE, CAT, IMAGE
+   COMMON share, path, hst_path,wircam_path,spitzer_path, hdf_path, $
+		cat_path, xsize, ysize
+   loadconfig
+ 
+	subimage,cat.wir_ra,cat.wir_dec,wircam_path+'goodsn_J_080110_WDX.fits',j
+	subimage,cat.wir_ra,cat.wir_dec,wircam_path+'goodsn_K_080113_WDX.fits',k  
+	
+	subimage,cat.hdf_ra,cat.hdf_dec,hdf_path+'HDF.U.fits',u
+	subimage,cat.hdf_ra,cat.hdf_dec,hdf_path+'HDF.B.fits',b
+	subimage,cat.hdf_ra,cat.hdf_dec,hdf_path+'HDF.V0401.fits',v
+	subimage,cat.hdf_ra,cat.hdf_dec,hdf_path+'HDF.R.fits',r
+	subimage,cat.hdf_ra,cat.hdf_dec,hdf_path+'HDF.I.fits',i
+	subimage,cat.hdf_ra,cat.hdf_dec,hdf_path+'HDF.Z.fits',z
+	
+	iracsubimage,cat.irac_ra,cat.irac_dec,'1',i1
+	iracsubimage,cat.irac_ra,cat.irac_dec,'2',i2
+	iracsubimage,cat.irac_ra,cat.irac_dec,'3',i3
+	iracsubimage,cat.irac_ra,cat.irac_dec,'4',i4
+ 	
+
+	hstsubimage,cat.hst_ra, cat.hst_dec, cat.hst_sec, 'b', hb
+	hstsubimage,cat.hst_ra, cat.hst_dec, cat.hst_sec, 'v', hv
+	hstsubimage,cat.hst_ra, cat.hst_dec, cat.hst_sec, 'i', hi
+	hstsubimage,cat.hst_ra, cat.hst_dec, cat.hst_sec, 'z', hz
+	
+	image={id:cat.id,hb:hb,hv:hv,hi:hi,hz:hz,u:u,b:b,v:v,r:r,i:i,z:z,j:j,k:k,i1:i1,i2:i2,i3:i3,i4:i4}
+
+END
+
+PRO MAPIMAGE, IMAGE, PS=ps
+   COMMON share, path, hst_path,wircam_path,spitzer_path, hdf_path, $
+		cat_path, xsize, ysize
+   loadconfig
+  
+   !p.multi=[0,4,4]
+	name=tag_names(image)
+   
+	for j=0, n_elements(image.(1)(*,0,0))-1 do begin
+		if keyword_set(PS) then begin 
+			set_plot,'ps'
+			filename=strcompress(string(image.id[j]),/remove)+'.ps'
+			device,filename=path+filename,$
+			/color,xsize=20,ysize=20,xoffset=0.4,yoffset=10,$
+         SET_FONT='Helvetica',/TT_FONT,/encapsulated
+			
+			tvlct,[0,255,0,0],[0,0,255,0],[0,0,0,255]
+			red=1
+			green=2   
+		endif 
+		
+		
+		for i=1, n_tags(image)-1 do begin
+			!p.title = "!6"+name(i)
+			!x.title = "!6RA offset(arcsec)"  & !y.title = "!6Dec offset(arcsec)"
+			
+			im=reform(image.(i)[j,*,*])
+			
+			if strcmp(name[i],'HI') eq 1 or strcmp(name[i],'HZ') eq 1 or $ 
+				strcmp(name[i],'HB') eq 1 or strcmp(name[i],'HV')then begin
+			 th_image_cont,0.03-im,/nocont,/nobar,xrange=[-6,6],yrange=[-6,6],$
+			 	crange=[0,0.03]
+			endif else begin
+				th_image_cont,max(im)-im,/nocont,/nobar,xrange=[-(xsize/2),(xsize/2)],$
+				yrange=[-(ysize/2),ysize/2]
+			endelse 
+		endfor
+		
+		if keyword_set(PS) then begin
+			xyouts,0,0,filename,/device
+			device,/close
+			set_plot,'x'
+		endif
+
+	end
+	resetplt,/all
+	!p.multi=0
+END
+
+PRO IRACSUBIMAGE, RA, DEC, BAND, IMAGE 
+	COMMON share, path, hst_path,wircam_path,spitzer_path, hdf_path, $
+		cat_path, xsize, ysize
+   loadconfig
+	
+	fits1=spitzer_path+'n_irac_'+band+'_s1_v0.30_sci.fits'
+	fits2=spitzer_path+'n_irac_'+band+'_s2_v0.30_sci.fits'
+	
+	hdr1=headfits(fits1)
+	hdr2=headfits(fits2)
+	
+   im1=readfits(fits1)
+   im2=readfits(fits2)
+	
+	adxy,hdr1,ra,dec,x1,y1
+	adxy,hdr2,ra,dec,x2,y2
+	
+	d1=ceil(xsize/(sxpar(hdr1,'CD2_2')*3600))/2
+	d2=ceil(xsize/(sxpar(hdr2,'CD2_2')*3600))/2
+	
+	fim1=fltarr(n_elements(x1),d1*2,d1*2)
+	;fim2=fltarr(n_elements(x2),d2*2,d2*2)
+	
+	for i=0,n_elements(x1)-1 do begin
+      xx1=floor(x1[i])
+		xx2=floor(x2[i])
+		
+		yy1=floor(y1[i])
+		yy2=floor(y2[i])
+		
+		if ra[i] le 0 and  dec[i] le 0 then begin
+			fim1[i,*,*]=0.0
+			;fim2[i,*,*]=0.0
+		endif else begin
+			if total(im1[xx1-(d1-1):xx1+d1,yy1-(d1-1):yy1+d1]) eq 0 then begin
+				fim1[i,*,*]=im2[xx2-(d2-1):xx2+d2,yy2-(d2-1):yy2+d2]
+			endif else begin
+				fim1[i,*,*]=im1[xx1-(d1-1):xx1+d1,yy1-(d1-1):yy1+d1]
+			endelse
+			;fim1[i,*,*]=im1[xx1-(d1-1):xx1+d1,yy1-(d1-1):yy1+d1]
+			;fim2[i,*,*]=im2[xx2-(d2-1):xx2+d2,yy2-(d2-1):yy2+d2]
+		endelse
+   endfor
+
+	image=fim1
+END
+
+PRO SUBIMAGE, RA, DEC, FITS, IMAGE 
+	COMMON share, path, hst_path,wircam_path,spitzer_path, hdf_path, $
+		cat_path, xsize, ysize
+   loadconfig
+	
+	hdr=headfits(fits)
+   im=readfits(fits)
+	adxy,hdr,ra,dec,x,y
+	d=ceil(xsize/(sxpar(hdr,'CD2_2')*3600))/2
+	fim1=fltarr(n_elements(x),d*2,d*2)
+	
+	for i=0,n_elements(x)-1 do begin
+      xx=floor(x[i])
+		yy=floor(y[i])
+		if ra[i] le 0 and  dec[i] le 0 then begin
+			fim1[i,*,*]=0.0
+		endif else begin
+			fim1[i,*,*]=im[xx-(d-1):xx+d,yy-(d-1):yy+d]
+		endelse
+   endfor
+
+	image=fim1
+END
+
+
+
+PRO HSTSUBIMAGE, RA, DEC, SEC, BAND, IMAGE
+	COMMON share, path, hst_path,wircam_path,spitzer_path, hdf_path, $
+		cat_path, xsize, ysize
+	loadconfig
+	
+	hdr=headfits(hst_path+'h_n'+band+'_sect13_v1.0_drz_img.fits')
+	d=ceil(xsize/(sxpar(hdr,'CD2_2')*3600))/2
+	fim1=fltarr(n_elements(ra),d*2,d*2)
+	
+	for i=0, n_elements(ra)-1 do begin
+		if ra[i] le 0 and  dec[i] le 0 then begin
+			fim1[i,*,*]=0.0
+		endif else begin
+			file='h_n'+band+'_sect'+strcompress(string(sec[i]),/remove)+$
+			'_v1.0_drz_img.fits'
+			hdr=headfits(hst_path+file)
+			im=readfits(hst_path+file)
+			adxy,hdr,ra[i],dec[i],x,y
+			xx=floor(x)
+			yy=floor(y)
+			
+			if 
+	
+			fim1[i,*,*]=im[xx-(d-1):xx+d,yy-(d-1):yy+d]
+		endelse
+
+			
+	endfor 
+	image=fim1
+END
+
+PRO EXTRACTIMAGE
+	
+	ind=[5246,7667,7909,10668,12366,13191,13814,$
+15094,15620,16933,18370,18743,18993,19197,20650,21742,22396,22932,$
+23929,24172,24799,24858]
+	
+	index=ind-1
+	loadcat,cat,index=index
+	loadcat,cat;,index=[]
+	catalogimage,cat,image
+	mapimage,image,/ps
+END

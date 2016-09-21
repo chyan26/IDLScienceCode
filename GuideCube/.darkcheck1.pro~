@@ -1,0 +1,29 @@
+path = 'C:\RSI\temp\'
+bigdark = intarr(32,32)
+for i=0,1 do begin
+    for j=0,1 do begin
+		x=strcompress(string(8+16*i),/remove)
+		y=strcompress(string(8+16*j),/remove)
+		filename='/data/gcube/HP070905NoOverlap-'+x+'-'+y+'-gc.fits'
+		im=mrdfits(filename,1, /silent)+32768.0
+		;nim=im[16:31,16:31,*]
+		im2d=mediancube(nim)
+		bigdark(i*16:((i+1)*16)-1,j*16:((j+1)*16)-1) = im2d
+
+    endfor
+endfor
+writefits,"/arrays/cfht/cfht_3/chyan/CFHT/gcube/Sdark/darkfinal.fits",bigdark
+
+ind=where(bigdark ge 10000,count,complement=inx)
+
+check=bigdark
+if count eq 0 then begin
+	check[*,*]=1
+endif else begin
+	check[ind]=0
+	check[inx]=1
+endelse
+
+writefits,"/arrays/cfht/cfht_3/chyan/CFHT/gcube/Sdark/check.fits",check
+
+END

@@ -1,0 +1,135 @@
+;+
+; NAME:
+;     APERPHOT
+; PURPOSE:
+;     
+; EXPLANATION:
+;     
+;
+; CALLING SEQUENCE
+;     
+; INPUTS:
+;     IM - Image array 
+;
+;     CRANGE - The color range will be use to display the image.
+;
+; OUTPUT:
+;     
+;
+; METHOD:
+;
+; REVISION HISTORY:
+;     Initial version Chi-hung Yan   Oct 2006
+
+PRO APERPHOT, im, apsize, hmin, cat, OUTPUTXY=outputxy, LOADXY=loadxy,$
+ CRANGE=crange, FILE=file
+     
+   fwhm=apsize
+   if keyword_set(loadxy) then goto,here
+   
+   hmin=hmin
+   sharplim=[0.2,1.0]
+   roundlim=[-1.0,1.0]
+   find,im,x1,y1,flux,sharp,round,hmin,fwhm,roundlim,sharplim,/silent
+   
+   ; Searching for points that are close to each other
+   i=0
+   while (i ne n_elements(x1)) do begin
+      if i eq 0 then begin
+         x=x1[i]
+         y=y1[i]
+      endif else begin
+         dist=sqrt((x1[i]-x1)^2+(y1[i]-y1)^2)
+         ind=where(dist lt 5,count,complement=inx)
+         if count ge 2 then begin
+            x=[x,x1[ind[where(flux[ind] eq max(flux[ind]))]]]
+            y=[y,y1[ind[where(flux[ind] eq max(flux[ind]))]]]
+            
+            x1=x1[inx]
+            y1=y1[inx]
+            ;print,count
+         endif else begin
+            x=[x,x1[i]]
+            y=[y,y1[i]]           
+         endelse
+      endelse    
+      i=i+1
+   endwhile
+	
+   ; Deleting stars by selecting from mouse
+   message,/INFO,"Selecting unwanted stars by LEFT button, RIGHT button for QUIT."
+   !mouse.button=2
+   while (!mouse.button ne 4) do begin
+      th_image_cont,im,crange=crange,/nocont,/nobar
+      oplot,x,y,psym=4,color=255
+
+      cursor,x1,y1,/down
+      if !mouse.button eq 1 then begin
+         dist=sqrt((x1-x)^2+(y1-y)^2)
+         ind=where(dist le 4,count,complement=inx)
+         x=x[inx]
+         y=y[inx]
+         flux=flux[inx]
+      endif
+   endwhile
+   
+   
+   ; Adding stars by selecting from mouse
+   crange[1]=crange[1]/5
+   message,/INFO,"Adding stars by LEFT button, RIGHT button for QUIT."
+   !mouse.button=2
+   while (!mouse.button ne 4) do begin
+      th_image_cont,im,crange=crange,/nocont,/nobar
+      oplot,x,y,psym=4,color=255
+
+      cursor,x1,y1,/down
+      if !mouse.button eq 1 then begin
+         cntrd,im,x1,y1,xcen,ycen,fwhm
+         x=[x,xcen]
+         y=[y,ycen]
+         flux=[flux,0.0]
+      endif
+   endwhile
+   
+   if keyword_set(outputxy) then begin
+      close,1
+      openw,1,outputxy
+         for i=0, n_elements(x)-1 do begin
+            printf,1,format='(f9.3,2x,f9.3,2x,f10.3)',$
+            x[i],y[i],flux[i]   
+         endfor      
+      close,1
+   endif 
+   
+   here:wait,0.5
+   if keyword_set(loadxy) then begin
+      readcol,loadxy,x,y,flux1
+   endif
+   
+   
+   aper,im,x,y,flux1,aperr,sky,skyerr,1,apsize+0.4*apsize,$
+      apsize+0.4*apsize+[2,5],[0,0],/flux,/silent
+   
+	mag1=25-2.5*alog10(flux1)
+      
+   cat={cat,id:0,x:0.0,y:0.0,mag:0.0,flux:0.0,err:0.0} 
+   cat=replicate(cat,n_elements(x))
+   cat.id=indgen(n_elements(x))+1
+   cat.x=x
+   cat.y=y
+   
+   cat.flux=reform(flux1)
+   cat.mag=reform(mag1)
+   cat.err=reform(aperr)
+
+   if keyword_set(file) then begin
+      close,1
+      openw,1,file
+      for i=0, n_elements(cat.id)-1 do begin
+         printf,1,format='(i3,2x,f9.3,2x,f9.3,2x,f10.3,2x,f6.3,2x,f10.3)',$
+            cat[i].id,cat[i].x,cat[i].y,cat[i].flux,cat[i].mag,cat[i].err
+      endfor
+      close,1
+   endif
+   
+end

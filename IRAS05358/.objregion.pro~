@@ -1,0 +1,50 @@
+PRO LOADCONFIG
+	COMMON share,imgpath, mappath
+	
+	;Settings for HOME computer
+	;imgpath = '/Volumes/disk1s1/S233IR/'
+	;mappath = '/Volumes/disk1s1/S233IR/'
+	
+	;Settings for ASIAA computer
+	imgpath='/arrays/cfht/cfht_2/chyan/home/Science/S233IR/'
+	mappath='/arrays/cfht/cfht_2/chyan/home/Science/S233IR/'
+END
+
+PRO OBJREGION, cat
+	COMMON share,imgpath, mappath	
+	loadconfig
+	
+	x=cat.x
+	y=cat.y
+	
+	regname = 'objregion.reg'
+	regpath = mappath
+	regfile = regpath+regname
+	
+	openw,fileunit, regfile, /get_lun	
+	for i=0,n_elements(x)-1 do begin
+		ext=0	
+		if cat.mj[i] ge 0 then begin
+			regstring = 'tile '+strcompress(string(ext),/remove_all)+'; image; circle('+$
+							strcompress(string(x[i]),/remove_all)+','+$
+							strcompress(string(y[i]),/remove_all)+',7) #color = blue'
+			printf, fileunit, format='(A)', regstring
+		endif
+		if cat.mh[i] ge 0 then begin
+			regstring = 'tile '+strcompress(string(ext),/remove_all)+'; image; circle('+$
+							strcompress(string(x[i]),/remove_all)+','+$
+							strcompress(string(y[i]),/remove_all)+',5) #color = green'
+			printf, fileunit, format='(A)', regstring
+		endif
+		if cat.mk[i] ge 0 then begin
+			regstring = 'tile '+strcompress(string(ext),/remove_all)+'; image; box('+$
+							strcompress(string(x[i]),/remove_all)+','+$
+							strcompress(string(y[i]),/remove_all)+',5,5,5,5) #color = red'
+			printf, fileunit, format='(A)', regstring
+		endif
+		
+	endfor
+	close, fileunit
+	free_lun,fileunit
+
+END

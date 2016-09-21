@@ -1,0 +1,29 @@
+
+* INTRODUCTION
+
+This package is used to plot the image of FITS file and mark the regions and
+objects.  The original idea of this program is to plot Dobashi's absorption 
+map and label objects on it.  The figure will be produced in the format of EPS.
+Therefore, user can easily insert this figure to a Latex file.
+
+* INSTALATION
+
+It is very easy to install this package. Please follow the procedures listed 
+to install this package.
+	1. Untar package.
+		% tar xvzf dobashi.tgz
+	2. Copy the directory to wherever you want.
+		% cp -r dobashi <new_path>
+	3. Go to the directory where you put the directory.
+		% cd <new_path>
+	4. Edit the main program dobashi.pro
+		% vi dobashi.pro
+	5. Modify the variables which are labled by string "INPUT".  The most 
+	   important variables are the path and file name of dobashi's FITS file
+	   , name of output eps file and the object/region definitions.	
+	6. Start IDL in this directory, or you have to add the path in IDL !path
+	   variable.
+	    % idl   
+	7. Run dobashi.pro under IDL prompt.
+		% dobashi
+	
